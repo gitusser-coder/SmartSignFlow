@@ -111,7 +111,7 @@ label input[type="range"]{ width:160px }
   .sigpad{ height: 96px; }
   .toolbar .tool-group label input[type="range"]{ width:120px }
 }
-```css
+
 :root{
   --bg: #ffffff;
   --text: #111826;
