@@ -2,81 +2,102 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
   <title>SmartSign – PDF unterschreiben</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('editor.static', filename='editor.css') }}" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
-    h1 { margin-bottom: 8px; }
-    .row { display: flex; gap: 16px; flex-wrap: wrap; }
-    .panel { border: 1px solid #ddd; border-radius: 10px; padding: 12px; }
-    #pdf-container { position: relative; display: inline-block; }
-    #pdf-canvas { border: 1px solid #999; display: block; }
-    #overlay { position: absolute; left: 0; top: 0; pointer-events: none; }
-    .suggestion { position: absolute; border: 2px dashed #2b6cb0; background: rgba(66, 153, 225, 0.08); pointer-events: auto; cursor: pointer; }
-    #sigOverlay { position: absolute; pointer-events: auto; cursor: move; box-shadow: 0 0 0 2px rgba(0,0,0,0.1); background: white; }
-    #toolbar button, #toolbar input, #toolbar label { margin-right: 8px; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 8px; }
-    .tab-btn { padding: 6px 10px; border: 1px solid #ccc; border-radius: 8px; background: #f8f8f8; cursor: pointer; }
-    .tab-btn.active { background: #e9f2ff; border-color: #7aa7ff; }
-    .tab { display: none; }
-    .tab.active { display: block; }
-    .muted { color: #666; font-size: 12px; }
-  </style>
 </head>
 <body>
-  <h1>SmartSign – PDF unterschreiben</h1>
-  <div id="toolbar" class="panel row">
-    <div>
-      <input type="file" id="pdf-input" accept="application/pdf" />
-      <button id="btn-upload">PDF laden</button>
+  <header class="topbar">
+    <h1>SmartSign</h1>
+    <div class="spacer"></div>
+    <button id="theme-toggle" class="btn ghost" aria-label="Theme umschalten">🌓</button>
+  </header>
+
+  <section id="toolbar" class="panel toolbar">
+    <div class="tool-group">
+      <label class="file">
+        <input type="file" id="pdf-input" accept="application/pdf" />
+        <span>PDF auswählen</span>
+      </label>
+      <button id="btn-upload" class="btn">Laden</button>
       <span id="meta" class="muted"></span>
     </div>
-    <div>
-      <button id="btn-prev">← Zurück</button>
-      <button id="btn-next">Weiter →</button>
-      <span>Seite <span id="page-num">1</span>/<span id="page-count">?</span></span>
-      <label style="margin-left:12px;">Zoom: <input id="zoom" type="range" min="50" max="200" value="100" /> <span id="zoom-val">100%</span></label>
-    </div>
-    <div>
-      <button id="btn-detect">Smart&nbsp;Detect</button>
-      <label><input type="checkbox" id="apply-all" /> Position auf alle Seiten anwenden</label>
-    </div>
-  </div>
 
-  <div id="pdf-container">
-    <canvas id="pdf-canvas"></canvas>
-    <div id="overlay"></div>
-  </div>
+    <div class="tool-group">
+      <button id="btn-prev" class="btn">← Zurück</button>
+      <button id="btn-next" class="btn">Weiter →</button>
+      <span class="muted">Seite <span id="page-num">1</span>/<span id="page-count">?</span></span>
+    </div>
 
-  <div class="panel" style="margin-top:16px; max-width:900px;">
+    <div class="tool-group nowrap">
+      <label>Zoom
+        <input id="zoom" type="range" min="50" max="200" value="100" />
+      </label>
+      <span id="zoom-val" class="muted">100%</span>
+    </div>
+
+    <div class="tool-group">
+      <button id="btn-detect" class="btn secondary">Smart&nbsp;Detect</button>
+      <label class="checkbox"><input type="checkbox" id="apply-all" /> auf alle Seiten</label>
+    </div>
+  </section>
+
+  <section id="stage" class="stage">
+    <div id="pdf-container" class="pdf">
+      <canvas id="pdf-canvas"></canvas>
+      <div id="overlay"></div>
+    </div>
+  </section>
+
+  <section class="panel controls">
     <div class="tabs">
       <button class="tab-btn active" data-tab="draw">✍️ Zeichnen</button>
       <button class="tab-btn" data-tab="upload">🖼️ Bild hochladen</button>
     </div>
 
     <div id="tab-draw" class="tab active">
-      <canvas id="sig-pad" width="420" height="130" style="border:1px solid #bbb; border-radius:8px;"></canvas><br/>
-      <button id="sig-clear">Leeren</button>
-      <button id="sig-use">Als Signatur verwenden</button>
-      <span class="muted">Tipp: Maus/Stift/Finger – Linien sind geglättet.</span>
+      <canvas id="sig-pad" width="420" height="130" class="sigpad"></canvas>
+      <div class="actions">
+        <button id="sig-clear" class="btn ghost">Leeren</button>
+        <button id="sig-use" class="btn">Als Signatur verwenden</button>
+      </div>
+      <p class="muted">Tipp: Maus/Stift/Finger – Linien werden geglättet.</p>
     </div>
 
     <div id="tab-upload" class="tab">
-      <input type="file" id="sig-file" accept="image/*" />
-      <button id="sig-use-file">Bild als Signatur verwenden</button>
-      <span class="muted">Transparenter PNG‑Hintergrund wirkt am besten.</span>
+      <div class="file-row">
+        <input type="file" id="sig-file" accept="image/*" />
+        <button id="sig-use-file" class="btn">Bild als Signatur verwenden</button>
+      </div>
+      <p class="muted">Transparenter PNG‑Hintergrund wirkt am besten.</p>
     </div>
 
-    <div style="margin-top:10px;">
-      <label>Größe: <input id="size" type="range" min="80" max="600" value="220" /></label>
-      <button id="btn-remove-sig">Signatur vom Blatt entfernen</button>
-      <button id="btn-sign">PDF signieren & herunterladen</button>
+    <div class="grid2">
+      <label>Größe
+        <input id="size" type="range" min="80" max="600" value="220" />
+      </label>
+      <div class="right-actions">
+        <button id="btn-remove-sig" class="btn ghost">Signatur entfernen</button>
+        <button id="btn-sign" class="btn primary">PDF signieren & herunterladen</button>
+      </div>
     </div>
-  </div>
+  </section>
 
   <script>
+    // ---------------- Theme (light/dark) ----------------
+    const root = document.documentElement;
+    const themeKey = 'smartsign-theme';
+    function applyTheme(t){ root.dataset.theme = t; }
+    const stored = localStorage.getItem(themeKey);
+    if (stored) { applyTheme(stored); }
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) { applyTheme('dark'); }
+    document.getElementById('theme-toggle').addEventListener('click', ()=>{
+      const next = (root.dataset.theme === 'dark') ? 'light' : 'dark';
+      applyTheme(next); localStorage.setItem(themeKey, next);
+    });
+
     // ---------------- State ----------------
     const uploadUrl = "{{ url_for('editor.upload_file') }}";
     const suggestUrl = "{{ url_for('editor.suggest_positions') }}";
@@ -91,15 +112,15 @@
     const canvas = document.getElementById('pdf-canvas');
     const ctx = canvas.getContext('2d');
     const overlay = document.getElementById('overlay');
+    const pdfContainer = document.getElementById('pdf-container');
 
-    // placements[page] = {nx, ny, nw, nh}
-    const placements = {};
+    const placements = {}; // placements[page] = {nx, ny, nw, nh}
 
     // ---------------- PDF Rendering ----------------
     function fitScaleToWidth(page) {
-      const containerMax = Math.min(900, window.innerWidth - 64);
+      const containerW = pdfContainer.clientWidth || Math.min(900, window.innerWidth - 32);
       const viewport1 = page.getViewport({ scale: 1.0 });
-      return containerMax / viewport1.width;
+      return Math.min(2.0, containerW / viewport1.width);
     }
 
     async function renderPage(num) {
@@ -107,21 +128,20 @@
       const viewport = page.getViewport({ scale });
       canvas.width = Math.floor(viewport.width);
       canvas.height = Math.floor(viewport.height);
+
+      // overlay deckt den Canvas 1:1 ab
       overlay.style.width = canvas.width + 'px';
       overlay.style.height = canvas.height + 'px';
-      overlay.style.left = canvas.offsetLeft + 'px';
-      overlay.style.top = canvas.offsetTop + 'px';
+      overlay.style.left = '0px';
+      overlay.style.top = '0px';
 
       await page.render({ canvasContext: ctx, viewport }).promise;
-
       document.getElementById('page-num').textContent = num;
       drawPlacementForPage(num);
     }
 
     function drawPlacementForPage(num) {
-      // clear overlay & draw suggestion boxes if any kept
       overlay.innerHTML = '';
-
       const p = placements[num];
       if (p) {
         const { x, y, w, h } = fromNorm(p);
@@ -129,32 +149,24 @@
       }
     }
 
-    function toNorm(x, y, w, h) {
-      return { nx: x / canvas.width, ny: y / canvas.height, nw: w / canvas.width, nh: h / canvas.height };
-    }
-    function fromNorm({ nx, ny, nw, nh }) {
-      return { x: nx * canvas.width, y: ny * canvas.height, w: nw * canvas.width, h: nh * canvas.height };
-    }
+    function toNorm(x, y, w, h) { return { nx: x / canvas.width, ny: y / canvas.height, nw: w / canvas.width, nh: h / canvas.height }; }
+    function fromNorm({ nx, ny, nw, nh }) { return { x: nx * canvas.width, y: ny * canvas.height, w: nw * canvas.width, h: nh * canvas.height }; }
 
     // ---------------- Upload PDF ----------------
     document.getElementById('btn-upload').addEventListener('click', async () => {
       const f = document.getElementById('pdf-input').files[0];
       if (!f) { alert('Bitte ein PDF auswählen.'); return; }
-      const fd = new FormData();
-      fd.append('file', f);
+      const fd = new FormData(); fd.append('file', f);
       const r = await fetch(uploadUrl, { method: 'POST', body: fd });
       const data = await r.json();
       if (!r.ok) { alert(data.message || 'Upload fehlgeschlagen'); return; }
-      pdfToken = data.pdf_token;
-      const pdfURL = data.pdf_url;
+      pdfToken = data.pdf_token; const pdfURL = data.pdf_url;
       pdfjsLib.getDocument(pdfURL).promise.then(async (pdf) => {
-        pdfDoc = pdf;
-        pageCount = pdf.numPages;
+        pdfDoc = pdf; pageCount = pdf.numPages;
         document.getElementById('page-count').textContent = pageCount;
         const page1 = await pdf.getPage(1);
         scale = fitScaleToWidth(page1);
-        document.getElementById('zoom').value = Math.round(scale * 100);
-        document.getElementById('zoom-val').textContent = Math.round(scale * 100) + '%';
+        const zv = Math.round(scale * 100); document.getElementById('zoom').value = zv; document.getElementById('zoom-val').textContent = zv + '%';
         pageNum = 1; placements[1] = null;
         document.getElementById('meta').textContent = ` | Seiten: ${pageCount}`;
         renderPage(1);
@@ -165,10 +177,22 @@
     document.getElementById('btn-next').addEventListener('click', () => { if (pdfDoc && pageNum < pageCount) { pageNum++; renderPage(pageNum); } });
 
     document.getElementById('zoom').addEventListener('input', (e) => {
-      if (!pdfDoc) return;
-      scale = parseInt(e.target.value, 10) / 100;
+      if (!pdfDoc) return; scale = parseInt(e.target.value, 10) / 100;
       document.getElementById('zoom-val').textContent = Math.round(scale * 100) + '%';
       renderPage(pageNum);
+    });
+
+    // responsive: bei Resize neu einpassen
+    let resizeTimer = null;
+    window.addEventListener('resize', async () => {
+      if (!pdfDoc) return;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(async () => {
+        const page = await pdfDoc.getPage(pageNum);
+        scale = fitScaleToWidth(page);
+        const zv = Math.round(scale * 100); document.getElementById('zoom').value = zv; document.getElementById('zoom-val').textContent = zv + '%';
+        renderPage(pageNum);
+      }, 150);
     });
 
     // ---------------- Signature Source: draw/upload ----------------
@@ -176,9 +200,9 @@
     const spCtx = sigPad.getContext('2d');
     spCtx.lineWidth = 2; spCtx.lineCap = 'round';
     let drawing = false;
-    sigPad.addEventListener('pointerdown', (e)=>{ drawing = true; spCtx.beginPath(); spCtx.moveTo(e.offsetX, e.offsetY); });
+    sigPad.addEventListener('pointerdown', (e)=>{ drawing = true; spCtx.beginPath(); spCtx.moveTo(e.offsetX, e.offsetY); sigPad.setPointerCapture(e.pointerId); });
     sigPad.addEventListener('pointermove', (e)=>{ if(!drawing) return; spCtx.lineTo(e.offsetX, e.offsetY); spCtx.stroke(); });
-    sigPad.addEventListener('pointerup', ()=> drawing = false);
+    sigPad.addEventListener('pointerup', ()=>{ drawing = false; });
     sigPad.addEventListener('pointerleave', ()=> drawing = false);
 
     document.getElementById('sig-clear').addEventListener('click', ()=>{ spCtx.clearRect(0,0,sigPad.width, sigPad.height); });
@@ -187,21 +211,18 @@
 
     function setSigFromDataURL(dataUrl) {
       currentSigDataUrl = dataUrl;
-      // if on a page, place a default overlay
       if (pdfDoc) {
         const defaultW = parseInt(document.getElementById('size').value, 10);
         const defaultH = Math.round(defaultW * 0.35);
         const x = Math.max(12, canvas.width - defaultW - 12);
         const y = Math.max(12, canvas.height - defaultH - 12);
-        const el = addSigOverlay(x, y, defaultW, defaultH);
-        // store normalized for current page
+        addSigOverlay(x, y, defaultW, defaultH);
         placements[pageNum] = toNorm(x,y,defaultW,defaultH);
       }
     }
 
     document.getElementById('sig-use').addEventListener('click', ()=>{
       const url = sigPad.toDataURL('image/png');
-      // empty check
       if (url === 'data:,') { alert('Bitte eine Signatur zeichnen.'); return; }
       setSigFromDataURL(url);
     });
@@ -209,31 +230,25 @@
     document.getElementById('sig-use-file').addEventListener('click', async ()=>{
       const f = document.getElementById('sig-file').files[0];
       if (!f) { alert('Bitte ein Bild auswählen.'); return; }
-      const reader = new FileReader();
-      reader.onload = () => setSigFromDataURL(reader.result);
-      reader.readAsDataURL(f);
+      const reader = new FileReader(); reader.onload = () => setSigFromDataURL(reader.result); reader.readAsDataURL(f);
     });
 
     // Tabs
     document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', ()=>{
       document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
       document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      btn.classList.add('active'); document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
     }));
 
-    // ---------------- Overlay (drag/resize & suggestions) ----------------
+    // ---------------- Overlay (drag & suggestions) ----------------
     function addSigOverlay(x, y, w, h) {
       overlay.innerHTML = '';
       const img = document.createElement('img');
       img.id = 'sigOverlay';
       img.src = currentSigDataUrl || sigPad.toDataURL('image/png');
-      img.style.left = x + 'px';
-      img.style.top = y + 'px';
-      img.style.width = w + 'px';
-      img.style.height = h + 'px';
-      overlay.appendChild(img);
-      enableDrag(img);
+      img.style.left = x + 'px'; img.style.top = y + 'px';
+      img.style.width = w + 'px'; img.style.height = h + 'px';
+      overlay.appendChild(img); enableDrag(img);
       return img;
     }
 
@@ -264,8 +279,7 @@
 
     document.getElementById('size').addEventListener('input', (e)=>{
       const el = document.getElementById('sigOverlay'); if(!el) return;
-      const w = parseInt(e.target.value, 10);
-      const h = Math.round(w * 0.35);
+      const w = parseInt(e.target.value, 10); const h = Math.round(w * 0.35);
       el.style.width = w + 'px'; el.style.height = h + 'px';
       savePlacementFromOverlay();
     });
@@ -276,27 +290,22 @@
     document.getElementById('btn-detect').addEventListener('click', async ()=>{
       if (!pdfToken) { alert('Bitte zuerst ein PDF laden.'); return; }
       const r = await fetch(suggestUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pdf_token: pdfToken })});
-      const data = await r.json();
-      if (!r.ok) { alert(data.message || 'Detect fehlgeschlagen'); return; }
+      const data = await r.json(); if (!r.ok) { alert(data.message || 'Detect fehlgeschlagen'); return; }
       drawSuggestions(data.suggestions || []);
     });
 
     function drawSuggestions(suggestions) {
-      // only current page
       overlay.querySelectorAll('.suggestion').forEach(n=>n.remove());
       const current = suggestions.filter(s => s.page === pageNum);
       current.forEach(rect => {
         const { x, y, w, h } = fromNorm(rect);
-        const box = document.createElement('div');
-        box.className = 'suggestion';
+        const box = document.createElement('div'); box.className = 'suggestion';
         box.style.left = x + 'px'; box.style.top = y + 'px';
         box.style.width = w + 'px'; box.style.height = h + 'px';
         box.title = 'Hier platzieren';
         box.addEventListener('click', ()=>{
           if (!currentSigDataUrl) { setSigFromDataURL(sigPad.toDataURL('image/png')); }
-          addSigOverlay(x, y, w, h);
-          placements[pageNum] = toNorm(x,y,w,h);
-          // clear hints after placing
+          addSigOverlay(x, y, w, h); placements[pageNum] = toNorm(x,y,w,h);
           overlay.querySelectorAll('.suggestion').forEach(n=>n.remove());
         });
         overlay.appendChild(box);
@@ -306,33 +315,26 @@
     // ---------------- Sign (POST to backend) ----------------
     document.getElementById('btn-sign').addEventListener('click', async ()=>{
       if (!pdfToken) { alert('Bitte zuerst ein PDF laden.'); return; }
-      // determine signature source
       let sigDataUrl = currentSigDataUrl || sigPad.toDataURL('image/png');
       if (!sigDataUrl || sigDataUrl === 'data:,') { alert('Bitte zuerst eine Signatur zeichnen oder als Bild wählen.'); return; }
 
-      // collect placements
       const useAll = document.getElementById('apply-all').checked;
       const payloadPlacements = [];
       if (useAll) {
-        // take current page placement and apply to all
-        const p = placements[pageNum];
-        if (!p) { alert('Bitte zuerst die Signatur auf einer Seite platzieren.'); return; }
+        const p = placements[pageNum]; if (!p) { alert('Bitte zuerst die Signatur auf einer Seite platzieren.'); return; }
         for (let i = 1; i <= pageCount; i++) payloadPlacements.push({ page: i, nx: p.nx, ny: p.ny, nw: p.nw, nh: p.nh });
       } else {
-        // send only pages with placements
-        for (let i = 1; i <= pageCount; i++) {
-          if (placements[i]) payloadPlacements.push({ page: i, ...placements[i] });
-        }
+        for (let i = 1; i <= pageCount; i++) { if (placements[i]) payloadPlacements.push({ page: i, ...placements[i] }); }
         if (payloadPlacements.length === 0) { alert('Bitte die Signatur mindestens auf einer Seite platzieren.'); return; }
       }
 
       const b64 = sigDataUrl.split(',')[1];
       const r = await fetch(signUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pdf_token: pdfToken, signature: b64, placements: payloadPlacements })});
-      const data = await r.json();
-      if (!r.ok) { alert(data.message || 'Signieren fehlgeschlagen'); return; }
-      // Download in neuem Tab
+      const data = await r.json(); if (!r.ok) { alert(data.message || 'Signieren fehlgeschlagen'); return; }
       window.open(data.signed_pdf_url, '_blank');
     });
   </script>
 </body>
 </html>
+
+
