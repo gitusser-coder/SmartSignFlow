@@ -39,6 +39,120 @@ html,body{height:100%}
 body{
   margin:0; padding:16px; line-height:1.4; color:var(--text); background:var(--bg);
   font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  overflow-x:hidden; /* verhindert horizontales Scrollen auf Mobile */
+}
+
+h1{font-size:clamp(18px, 3vw, 22px); margin:0}
+.muted{color:var(--muted)}
+.spacer{flex:1}
+
+/* zentriert die Hauptbereiche und limitiert Breite auf Desktop */
+.toolbar, .stage, .controls{ max-width: 980px; margin-inline: auto; }
+
+.topbar{
+  display:flex; align-items:center; gap:12px; padding:8px 12px; border:1px solid var(--border);
+  background:var(--panel); border-radius:12px; box-shadow:var(--shadow); position:sticky; top:8px; z-index:10;
+}
+
+.panel{
+  border:1px solid var(--border); background:var(--panel); border-radius:12px; box-shadow:var(--shadow);
+  padding:12px; margin-top:12px;
+}
+
+.toolbar{ display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; align-items:center; }
+.tool-group{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.nowrap{ white-space:nowrap }
+
+.stage{ display:flex; justify-content:center; }
+.pdf{ position:relative; width:100%; }
+#pdf-canvas{ width:100%; height:auto; display:block; border:1px solid var(--border); border-radius:8px; background:#fff; touch-action:none; overscroll-behavior:contain; }
+#overlay{ position:absolute; inset:0; pointer-events:none; /* Container blockt Scroll-Gesten */ touch-action:none; }
+
+/* clickable children können Pointer-Events wieder aktivieren */
+#overlay .suggestion, #sigOverlay{ pointer-events:auto; }
+
+.suggestion{
+  position:absolute; border:2px dashed var(--accent); background:color-mix(in oklab, var(--accent) 10%, transparent);
+  cursor:pointer; border-radius:6px;
+}
+
+#sigOverlay{
+  position:absolute; cursor:move; background:#ffffff; border-radius:4px; box-shadow:var(--shadow); touch-action:none; /* verhindert Seiten-Scroll beim Drag */
+}
+
+.tabs{ display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.tab-btn{ padding:8px 10px; border:1px solid var(--btn-border); background:var(--btn-bg); color:var(--btn-text); border-radius:10px; cursor:pointer; }
+.tab-btn.active{ outline:2px solid var(--accent); background:var(--accent-weak); }
+.tab{ display:none }
+.tab.active{ display:block }
+
+.sigpad{ width:min(100%, 520px); height:130px; border:1px solid var(--border); border-radius:10px; background:#fff; display:block; touch-action:none; overscroll-behavior:contain; }
+.file-row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+.grid2{ display:grid; grid-template-columns: 1fr auto; gap:12px; align-items:center }
+.right-actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end }
+
+label input[type="range"]{ width:160px }
+
+.file input[type="file"]{ display:none }
+.file span{ display:inline-block; padding:8px 12px; border:1px dashed var(--btn-border); border-radius:10px; cursor:pointer; }
+
+.btn{ appearance:none; border:1px solid var(--btn-border); background:var(--btn-bg); color:var(--btn-text); padding:8px 12px; border-radius:10px; cursor:pointer; }
+.btn:hover{ filter:brightness(1.05) }
+.btn.primary{ background:var(--accent); color:white; border-color: var(--accent); }
+.btn.secondary{ background:var(--accent-weak); border-color:color-mix(in oklab, var(--accent) 60%, var(--btn-border)); }
+.btn.ghost{ background:transparent }
+
+/* Mobile tweaks */
+@media (max-width: 640px){
+  body{ padding:12px }
+  .grid2{ grid-template-columns: 1fr }
+  .right-actions{ justify-content:stretch }
+  .right-actions .btn{ flex:1 }
+  .sigpad{ height: 96px; }
+  .toolbar .tool-group label input[type="range"]{ width:120px }
+}
+```css
+:root{
+  --bg: #ffffff;
+  --text: #111826;
+  --muted: #6b7280;
+  --panel: #ffffff;
+  --border: #e5e7eb;
+  --accent: #2563eb;
+  --accent-weak:#e0e7ff;
+  --btn-bg:#f3f4f6;
+  --btn-text:#111826;
+  --btn-border:#e5e7eb;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.03);
+}
+
+/* Dark Mode */
+html[data-theme="dark"]{
+  --bg: #0b0f14;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --panel: #0f141b;
+  --border: #1f2937;
+  --accent: #7aa7ff;
+  --accent-weak:#142038;
+  --btn-bg:#111827;
+  --btn-text:#e5e7eb;
+  --btn-border:#1f2937;
+  --shadow: none;
+}
+
+@media (prefers-color-scheme: dark){
+  html:not([data-theme="light"]) {
+    --bg: #0b0f14; --text:#e5e7eb; --muted:#9ca3af; --panel:#0f141b; --border:#1f2937;
+    --accent:#7aa7ff; --accent-weak:#142038; --btn-bg:#111827; --btn-text:#e5e7eb; --btn-border:#1f2937; --shadow:none;
+  }
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; padding:16px; line-height:1.4; color:var(--text); background:var(--bg);
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
 }
 
 h1{font-size:clamp(18px, 3vw, 22px); margin:0}

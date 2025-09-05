@@ -86,6 +86,14 @@
   </section>
 
   <script>
+
+    function prevent(e){ e.preventDefault(); }
+sigPad.addEventListener('pointerdown', (e)=>{ prevent(e); /* ... */ }, {passive:false});
+sigPad.addEventListener('pointermove', (e)=>{ if(!drawing) return; prevent(e); /* ... */ }, {passive:false});
+// Fallback iOS:
+sigPad.addEventListener('touchstart', prevent, {passive:false});
+sigPad.addEventListener('touchmove', prevent, {passive:false});
+
     // ---------------- Theme (light/dark) ----------------
     const root = document.documentElement;
     const themeKey = 'smartsign-theme';
