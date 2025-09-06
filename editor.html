@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <title>SmartSign – PDF unterschreiben</title>
-  <link rel="stylesheet" href="{{ url_for('editor.static', filename='editor.css') }}" />
+<link rel="stylesheet" href="{{ url_for('editor.static', filename='editor.css') }}?v={{ cache_bust }}">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 </head>
 <body>
@@ -203,19 +203,27 @@ sigPad.addEventListener('touchmove', prevent, {passive:false});
       }, 150);
     });
 
-    // ---------------- Signature Source: draw/upload ----------------
-    const sigPad = document.getElementById('sig-pad');
-    const spCtx = sigPad.getContext('2d');
-    spCtx.lineWidth = 2; spCtx.lineCap = 'round';
-    let drawing = false;
-    sigPad.addEventListener('pointerdown', (e)=>{ drawing = true; spCtx.beginPath(); spCtx.moveTo(e.offsetX, e.offsetY); sigPad.setPointerCapture(e.pointerId); });
-    sigPad.addEventListener('pointermove', (e)=>{ if(!drawing) return; spCtx.lineTo(e.offsetX, e.offsetY); spCtx.stroke(); });
-    sigPad.addEventListener('pointerup', ()=>{ drawing = false; });
-    sigPad.addEventListener('pointerleave', ()=> drawing = false);
+// ---------------- Signature Source: draw/upload ----------------
+const sigPad = document.getElementById('sig-pad');
+const spCtx = sigPad.getContext('2d');
+spCtx.lineWidth = 2; spCtx.lineCap = 'round';
+let drawing = false;
 
-    document.getElementById('sig-clear').addEventListener('click', ()=>{ spCtx.clearRect(0,0,sigPad.width, sigPad.height); });
+// Mobile: Scrollen/Pinch während des Zeichnens verhindern
+function prevent(e){ e.preventDefault(); }
+sigPad.addEventListener('pointerdown', (e)=>{ prevent(e); drawing = true; spCtx.beginPath(); spCtx.moveTo(e.offsetX, e.offsetY); sigPad.setPointerCapture(e.pointerId); }, {passive:false});
+sigPad.addEventListener('pointermove', (e)=>{ if(!drawing) return; prevent(e); spCtx.lineTo(e.offsetX, e.offsetY); spCtx.stroke(); }, {passive:false});
+sigPad.addEventListener('pointerup', ()=>{ drawing = false; }, {passive:false});
+sigPad.addEventListener('pointerleave', ()=> drawing = false, {passive:false});
+// iOS-Fallback
+sigPad.addEventListener('touchstart', prevent, {passive:false});
+sigPad.addEventListener('touchmove', prevent, {passive:false});
 
-    let currentSigDataUrl = null; // PNG dataURL used for overlay & backend
+document.getElementById('sig-clear').addEventListener('click', ()=>{ spCtx.clearRect(0,0,sigPad.width, sigPad.height); });
+
+let currentSigDataUrl = null;
+// … (Rest deines Blocks unverändert)
+
 
     function setSigFromDataURL(dataUrl) {
       currentSigDataUrl = dataUrl;
@@ -241,12 +249,6 @@ sigPad.addEventListener('touchmove', prevent, {passive:false});
       const reader = new FileReader(); reader.onload = () => setSigFromDataURL(reader.result); reader.readAsDataURL(f);
     });
 
-    // Tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-      btn.classList.add('active'); document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-    }));
 
     // ---------------- Overlay (drag & suggestions) ----------------
     function addSigOverlay(x, y, w, h) {
