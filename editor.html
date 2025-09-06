@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <title>SmartSign – PDF unterschreiben</title>
-<link rel="stylesheet" href="{{ url_for('editor.static', filename='editor.css') }}?v={{ cache_bust }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}?v={{ cache_bust }}">
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 </head>
 <body>
@@ -86,14 +87,6 @@
   </section>
 
   <script>
-
-    function prevent(e){ e.preventDefault(); }
-sigPad.addEventListener('pointerdown', (e)=>{ prevent(e); /* ... */ }, {passive:false});
-sigPad.addEventListener('pointermove', (e)=>{ if(!drawing) return; prevent(e); /* ... */ }, {passive:false});
-// Fallback iOS:
-sigPad.addEventListener('touchstart', prevent, {passive:false});
-sigPad.addEventListener('touchmove', prevent, {passive:false});
-
     // ---------------- Theme (light/dark) ----------------
     const root = document.documentElement;
     const themeKey = 'smartsign-theme';

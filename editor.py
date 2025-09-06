@@ -8,7 +8,7 @@ import time
 editor_bp = Blueprint(
     "editor",
     __name__,
-    template_folder="templates/editor",
+    template_folder="templates",
     static_folder="static",
 )
 
@@ -35,7 +35,7 @@ def _is_pdf(data: bytes) -> bool:
 @editor_bp.route("/", methods=["GET"])
 def editor():
     # Cache-Busting für CSS/JS während du entwickelst
-    return render_template("editor/editor.html", cache_bust=int(time.time()))
+    return render_template("editor.html", cache_bust=int(time.time()))
 
 
 @editor_bp.route('/upload', methods=['POST'])
