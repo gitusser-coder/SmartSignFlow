@@ -1,10 +1,16 @@
-
 import io, uuid, base64, time
 import fitz  # PyMuPDF
 from PIL import Image
 from flask import Blueprint, render_template, request, jsonify, send_file, url_for
+import time
 
-editor_bp = Blueprint('editor', __name__, template_folder='templates', static_folder='static')
+
+editor_bp = Blueprint(
+    "editor",
+    __name__,
+    template_folder="templates/editor",
+    static_folder="static",
+)
 
 # In-Memory-Speicher: token -> {bytes, created}
 PDF_TTL_SECONDS = 60 * 60  # 1h
@@ -26,9 +32,10 @@ def _is_pdf(data: bytes) -> bool:
 
 # ---------- Routes ----------
 
-@editor_bp.route('/', methods=['GET'])
+@editor_bp.route("/", methods=["GET"])
 def editor():
-    return render_template('editor.html')
+    # Cache-Busting für CSS/JS während du entwickelst
+    return render_template("editor/editor.html", cache_bust=int(time.time()))
 
 
 @editor_bp.route('/upload', methods=['POST'])
